@@ -1,4 +1,5 @@
-const BASE = 'http://localhost:5000/api'
+const BASE = 'https://billing-and-inventory-management-system.onrender.com/api'
+
 
 const getToken = () => localStorage.getItem('biz_token')
 

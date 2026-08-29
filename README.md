@@ -358,26 +358,5 @@ All endpoints except `/api/auth/*` require a `Bearer` token in the `Authorizatio
 
 ---
 
-## Screenshots
-
-To add screenshots to this README:
-
-1. Run both the server and client (`npm run dev` in each folder).
-2. Open the app in the browser.
-3. Take screenshots and save them to `docs/screenshots/` with these filenames:
-
-```
-docs/screenshots/login.png
-docs/screenshots/dashboard.png
-docs/screenshots/inventory.png
-docs/screenshots/add-product.png
-docs/screenshots/billing.png
-docs/screenshots/invoice-print.png
-docs/screenshots/settings.png
-```
-
-The image tags are already in place in each section above — they will render automatically once the files are added.
-
----
 
 *Built with React, Express, MongoDB, and Tailwind CSS.*
