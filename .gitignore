@@ -70,3 +70,6 @@ mongodb/
 # TypeScript
 # ==========================================
 *.tsbuildinfo
+
+# Claude Code
+.claude/
