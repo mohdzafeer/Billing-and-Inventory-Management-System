@@ -1,4 +1,4 @@
-const BASE = import.meta.env.VITE_API_URL
+const BASE = import.meta.env.BASE_URL || 'http://localhost:3000/api'
 // const BASE = 'http://localhost:3000/api'
 
 const getToken = () => localStorage.getItem('biz_token')
@@ -9,13 +9,28 @@ const buildHeaders = () => ({
 })
 
 const request = async (method, path, body) => {
-  const res = await fetch(`${BASE}${path}`, {
-    method,
-    headers: buildHeaders(),
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  })
-  const data = await res.json()
-  if (!res.ok) throw new Error(data.message || 'Request failed')
+  if (!BASE) throw new Error('API URL not configured — set VITE_API_URL in your .env file')
+
+  let res
+  try {
+    res = await fetch(`${BASE}${path}`, {
+      method,
+      headers: buildHeaders(),
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    })
+  } catch {
+    throw new Error('Cannot reach the server. Check your internet connection or API URL.')
+  }
+
+  const text = await res.text()
+  let data = {}
+  try {
+    data = text ? JSON.parse(text) : {}
+  } catch {
+    throw new Error(`Server returned an unexpected response (${res.status})`)
+  }
+
+  if (!res.ok) throw new Error(data.message || `Request failed (${res.status})`)
   return data
 }
 

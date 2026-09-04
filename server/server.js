@@ -11,7 +11,7 @@ connectDB()
 const allowedOrigins = [
     'http://localhost:5173',
     'http://localhost:5174',
-    ...(process.env.ALLOWED_ORIGIN ? [process.env.ALLOWED_ORIGIN] : [])
+    ...(process.env.CLIENT_URL_PROD ? [process.env.CLIENT_URL_PROD] : [])
 ]
 
 app.use(cors({
