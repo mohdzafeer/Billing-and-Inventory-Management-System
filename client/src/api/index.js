@@ -1,4 +1,4 @@
-const BASE = import.meta.env.BASE_URL || 'http://localhost:3000/api'
+const BASE = import.meta.env.API_URL
 // const BASE = 'http://localhost:3000/api'
 
 const getToken = () => localStorage.getItem('biz_token')
