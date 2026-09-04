@@ -5,8 +5,9 @@ import Dashboard from './pages/Dashboard'
 import Inventory from './pages/Inventory'
 import Billing from './pages/Billing'
 import Settings from './pages/Settings'
-import Login from './pages/Login'
-import { productsApi, billsApi, settingsApi } from './api/index'
+import Members from './pages/Members'
+import Home from './pages/Home'
+import { productsApi, billsApi, settingsApi, authApi } from './api/index'
 
 function App() {
   const [token, setToken] = useState(() => localStorage.getItem('biz_token'))
@@ -32,10 +33,11 @@ function App() {
   const loadAllData = useCallback(async () => {
     setLoading(true)
     try {
-      const [prods, bls, sett] = await Promise.all([
+      const [prods, bls, sett, me] = await Promise.all([
         productsApi.getAll(),
         billsApi.getAll(),
         settingsApi.get(),
+        authApi.me(),
       ])
       setProducts(prods)
       setBills(bls)
@@ -48,6 +50,7 @@ function App() {
         ownerName: sett.ownerName || '',
         logo: sett.logo || null,
       })
+      setCurrentUser(me)
     } catch (err) {
       if (err.message.includes('Invalid') || err.message.includes('token')) {
         handleLogout()
@@ -69,7 +72,7 @@ function App() {
   }
 
   if (!token) {
-    return <Login onLogin={handleLogin} />
+    return <Home onLogin={handleLogin} />
   }
 
   if (loading) {
@@ -89,32 +92,25 @@ function App() {
   const renderPage = () => {
     switch (currentPage) {
       case 'dashboard':
-        return <Dashboard products={products} bills={bills} setCurrentPage={setCurrentPage} />
+        return <Dashboard products={products} bills={bills} setCurrentPage={setCurrentPage} orgInfo={orgInfo} />
       case 'inventory':
-        return (
-          <Inventory
-            products={products}
-            setProducts={setProducts}
-          />
-        )
+        return <Inventory products={products} setProducts={setProducts} />
       case 'billing':
         return (
           <Billing
             products={products}
+            setProducts={setProducts}
             bills={bills}
             setBills={setBills}
             orgInfo={orgInfo}
           />
         )
       case 'settings':
-        return (
-          <Settings
-            orgInfo={orgInfo}
-            setOrgInfo={setOrgInfo}
-          />
-        )
+        return <Settings orgInfo={orgInfo} setOrgInfo={setOrgInfo} currentUser={currentUser} />
+      case 'members':
+        return <Members currentUser={currentUser} />
       default:
-        return <Dashboard products={products} bills={bills} setCurrentPage={setCurrentPage} />
+        return <Dashboard products={products} bills={bills} setCurrentPage={setCurrentPage} orgInfo={orgInfo} />
     }
   }
 
@@ -125,6 +121,7 @@ function App() {
         setCurrentPage={setCurrentPage}
         onLogout={handleLogout}
         orgInfo={orgInfo}
+        currentUser={currentUser}
       />
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         <Navbar currentPage={currentPage} orgInfo={orgInfo} currentUser={currentUser} />

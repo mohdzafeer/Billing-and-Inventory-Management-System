@@ -1,9 +1,81 @@
 import StatCard from '../components/StatCard'
 
-export default function Dashboard({ products, bills, setCurrentPage }) {
+export default function Dashboard({ products, bills, setCurrentPage, orgInfo }) {
   const today = new Date().toDateString()
-  const todayBills = bills.filter(b => new Date(b.date).toDateString() === today)
+  const todayBills = bills.filter(b => new Date(b.createdAt).toDateString() === today)
   const todayRevenue = todayBills.reduce((sum, b) => sum + b.total, 0)
+
+  const printBill = (bill) => {
+    const invoiceDate = new Date(bill.createdAt).toLocaleDateString('en-PK', {
+      year: 'numeric', month: 'long', day: 'numeric',
+    })
+    const itemRows = bill.items.map((item, i) => `
+      <tr style="border-bottom:1px solid #f3f4f6">
+        <td style="padding:8px 10px;color:#9ca3af">${i + 1}</td>
+        <td style="padding:8px 10px;color:#374151;font-weight:500">${item.name}</td>
+        <td style="padding:8px 10px;color:#374151;text-align:center">${item.qty}</td>
+        <td style="padding:8px 10px;color:#374151;text-align:right">Rs. ${item.price.toLocaleString()}</td>
+        <td style="padding:8px 10px;color:#111;font-weight:600;text-align:right">Rs. ${(item.price * item.qty).toLocaleString()}</td>
+      </tr>`).join('')
+    const win = window.open('', '_blank', 'width=800,height=700')
+    win.document.write(`<!DOCTYPE html><html><head><title>Invoice ${bill.invoiceNo}</title><style>
+      *{margin:0;padding:0;box-sizing:border-box}
+      body{font-family:'Segoe UI',Arial,sans-serif;color:#111;background:#fff;padding:40px}
+      table{width:100%;border-collapse:collapse;margin-bottom:20px}
+      thead tr{background:#f1f0ff}
+      th{padding:9px 12px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#4f46e5}
+      th:last-child,th:nth-child(3),th:nth-child(4){text-align:right}
+      th:nth-child(3){text-align:center}
+      img.logo{height:38px;margin-bottom:6px;object-fit:contain}
+    </style></head><body>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;padding-bottom:20px;border-bottom:2px solid #4f46e5">
+        <div>
+          ${orgInfo?.logo ? `<img class="logo" src="${orgInfo.logo}" alt="Logo"/>` : ''}
+          <div style="font-size:20px;font-weight:700;color:#4f46e5">${orgInfo?.name || 'Your Organization'}</div>
+          <div style="font-size:11px;color:#6b7280;margin-top:3px;line-height:1.5">
+            ${orgInfo?.address ? `<div>${orgInfo.address}</div>` : ''}
+            ${orgInfo?.phone ? `<div>Tel: ${orgInfo.phone}</div>` : ''}
+            ${orgInfo?.email ? `<div>${orgInfo.email}</div>` : ''}
+          </div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:26px;font-weight:800;letter-spacing:2px;color:#111">INVOICE</div>
+          <div style="font-size:11px;color:#6b7280;margin-top:4px;line-height:1.6">
+            <div># ${bill.invoiceNo}</div>
+            <div>${invoiceDate}</div>
+          </div>
+        </div>
+      </div>
+      ${bill.customerName || bill.customerPhone || bill.customerAddress ? `
+      <div style="margin-bottom:24px">
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#9ca3af;margin-bottom:5px">Bill To</div>
+        ${bill.customerName ? `<div style="font-size:14px;font-weight:600;color:#111">${bill.customerName}</div>` : ''}
+        ${bill.customerPhone ? `<div style="font-size:11px;color:#6b7280;margin-top:2px">${bill.customerPhone}</div>` : ''}
+        ${bill.customerAddress ? `<div style="font-size:11px;color:#6b7280;margin-top:1px">${bill.customerAddress}</div>` : ''}
+      </div>` : ''}
+      <table>
+        <thead>
+          <tr>
+            <th>#</th><th>Item</th><th style="text-align:center">Qty</th><th style="text-align:right">Rate</th><th style="text-align:right">Amount</th>
+          </tr>
+        </thead>
+        <tbody>${itemRows}</tbody>
+      </table>
+      <div style="display:flex;justify-content:flex-end">
+        <div style="width:210px">
+          <div style="display:flex;justify-content:space-between;padding:10px 14px;background:#4f46e5;color:#fff;font-size:14px;font-weight:700;border-radius:8px">
+            <span>Total</span><span>Rs. ${bill.total.toLocaleString()}</span>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:36px;padding-top:16px;border-top:1px solid #e5e7eb;text-align:center;font-size:11px;color:#9ca3af">
+        Thank you for your business!${orgInfo?.name ? `<div style="margin-top:2px">— ${orgInfo.name}</div>` : ''}
+      </div>
+    </body></html>`)
+    win.document.close()
+    win.focus()
+    setTimeout(() => { win.print(); win.close() }, 400)
+  }
   const categories = [...new Set(products.map(p => p.category).filter(Boolean))]
 
   return (
@@ -96,16 +168,28 @@ export default function Dashboard({ products, bills, setCurrentPage }) {
                     <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Customer</th>
                     <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Date</th>
                     <th className="text-right px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Amount</th>
+                    <th className="px-5 py-3"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {[...bills].reverse().slice(0, 8).map((bill, i) => (
+                  {bills.slice(0, 8).map((bill, i) => (
                     <tr key={i} className="hover:bg-gray-50 transition-colors">
                       <td className="px-5 py-3 text-sm font-medium text-indigo-600">#{bill.invoiceNo}</td>
                       <td className="px-5 py-3 text-sm text-gray-700">{bill.customerName || 'Walk-in Customer'}</td>
-                      <td className="px-5 py-3 text-sm text-gray-500">{new Date(bill.date).toLocaleDateString()}</td>
+                      <td className="px-5 py-3 text-sm text-gray-500">{new Date(bill.createdAt).toLocaleDateString()}</td>
                       <td className="px-5 py-3 text-sm font-semibold text-gray-900 text-right">
                         Rs. {bill.total.toLocaleString()}
+                      </td>
+                      <td className="px-5 py-3 text-right">
+                        <button
+                          onClick={() => printBill(bill)}
+                          title="Print invoice"
+                          className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                          </svg>
+                        </button>
                       </td>
                     </tr>
                   ))}

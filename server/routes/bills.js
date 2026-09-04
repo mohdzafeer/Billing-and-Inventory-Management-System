@@ -1,14 +1,15 @@
 const express = require('express')
 const router = express.Router()
 const Bill = require('../models/Bill')
+const Product = require('../models/Product')
 const auth = require('../middleware/auth')
 
 router.use(auth)
 
-// Get all bills for logged-in user
+// Get all bills for the org
 router.get('/', async (req, res) => {
   try {
-    const bills = await Bill.find({ user: req.user.id }).sort({ createdAt: -1 })
+    const bills = await Bill.find({ user: req.user.orgId }).sort({ createdAt: -1 })
     res.json(bills)
   } catch (err) {
     res.status(500).json({ message: err.message })
@@ -32,8 +33,17 @@ router.post('/', async (req, res) => {
       items,
       subtotal,
       total,
-      user: req.user.id,
+      user: req.user.orgId,
     })
+
+    // Deduct sold quantities from inventory
+    const deductions = items.filter(i => i.productId)
+    await Promise.all(deductions.map(item =>
+      Product.findOneAndUpdate(
+        { _id: item.productId, user: req.user.orgId },
+        { $inc: { quantity: -item.qty } }
+      )
+    ))
 
     res.status(201).json(bill)
   } catch (err) {

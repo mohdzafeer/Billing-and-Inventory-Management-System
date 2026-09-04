@@ -3,7 +3,7 @@ import { billsApi } from '../api/index'
 
 const generateInvoiceNo = () => `INV-${Date.now().toString().slice(-7)}`
 
-export default function Billing({ products, bills, setBills, orgInfo }) {
+export default function Billing({ products, setProducts, bills, setBills, orgInfo }) {
   const [customer, setCustomer] = useState({ name: '', phone: '', address: '' })
   const [items, setItems] = useState([])
   const [selectedProductId, setSelectedProductId] = useState('')
@@ -59,8 +59,9 @@ export default function Billing({ products, bills, setBills, orgInfo }) {
     setItems(prev => prev.map((item, i) => i === index ? { ...item, qty: n } : item))
   }
 
-  const handleSave = async () => {
-    if (items.length === 0 || saving || savedBill) return
+  const saveBill = async () => {
+    if (savedBill) return savedBill
+    if (items.length === 0 || saving) return null
     setSaving(true)
     try {
       const bill = await billsApi.create({
@@ -71,18 +72,28 @@ export default function Billing({ products, bills, setBills, orgInfo }) {
         items,
         subtotal,
         total,
-        date: new Date().toISOString(),
       })
       setBills(prev => [bill, ...prev])
       setSavedBill(bill)
+      // Deduct sold quantities from local products state
+      setProducts(prev => prev.map(p => {
+        const sold = items.find(i => i.productId === p._id)
+        return sold ? { ...p, quantity: Math.max(0, p.quantity - sold.qty) } : p
+      }))
+      return bill
     } catch (err) {
       alert(err.message)
+      return null
     } finally {
       setSaving(false)
     }
   }
 
-  const handlePrint = () => {
+  const handleSave = () => saveBill()
+
+  const handlePrint = async () => {
+    if (items.length === 0) return
+    await saveBill()
     const content = billRef.current
     if (!content) return
     const win = window.open('', '_blank', 'width=800,height=700')
@@ -400,13 +411,13 @@ export default function Billing({ products, bills, setBills, orgInfo }) {
           )}
           <button
             onClick={handlePrint}
-            disabled={items.length === 0}
+            disabled={items.length === 0 || saving}
             className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-200 disabled:text-gray-400 text-white py-2.5 rounded-xl text-sm font-semibold transition-colors cursor-pointer disabled:cursor-not-allowed"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
             </svg>
-            Print / Download PDF
+            {saving ? 'Saving...' : 'Print / Download PDF'}
           </button>
           <button
             onClick={handleSave}

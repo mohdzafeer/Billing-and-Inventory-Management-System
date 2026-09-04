@@ -1,5 +1,5 @@
-const BASE = 'https://billing-and-inventory-management-system.onrender.com/api'
-
+const BASE = import.meta.env.VITE_API_URL
+// const BASE = 'http://localhost:3000/api'
 
 const getToken = () => localStorage.getItem('biz_token')
 
@@ -22,6 +22,7 @@ const request = async (method, path, body) => {
 export const authApi = {
   login: (body) => request('POST', '/auth/login', body),
   register: (body) => request('POST', '/auth/register', body),
+  me: () => request('GET', '/auth/me'),
 }
 
 export const productsApi = {
@@ -39,4 +40,10 @@ export const billsApi = {
 export const settingsApi = {
   get: () => request('GET', '/settings'),
   update: (body) => request('PUT', '/settings', body),
+}
+
+export const membersApi = {
+  getAll: () => request('GET', '/members'),
+  add: (body) => request('POST', '/members', body),
+  remove: (id) => request('DELETE', `/members/${id}`),
 }

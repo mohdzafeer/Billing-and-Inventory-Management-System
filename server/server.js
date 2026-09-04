@@ -10,7 +10,8 @@ connectDB()
 
 const allowedOrigins = [
     'http://localhost:5173',
-    'https://billing-and-inventory-management-sy.vercel.app'
+    'http://localhost:5174',
+    ...(process.env.ALLOWED_ORIGIN ? [process.env.ALLOWED_ORIGIN] : [])
 ]
 
 app.use(cors({
@@ -31,6 +32,7 @@ app.use('/api/auth', require('./routes/auth'))
 app.use('/api/products', require('./routes/products'))
 app.use('/api/bills', require('./routes/bills'))
 app.use('/api/settings', require('./routes/settings'))
+app.use('/api/members', require('./routes/members'))
 
 app.get('/', (req, res) => res.send('BizManager API is running'))
 
