@@ -66,7 +66,7 @@ export default function Login({ onLogin, initialMode = 'login', onBack }) {
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-white">BizManager</h1>
+          <h1 className="text-2xl font-bold text-white">Bilz Manager</h1>
           <p className="text-slate-400 text-sm mt-1">Billing & Inventory Management</p>
         </div>
 

@@ -90,12 +90,10 @@ function Brand({ orgInfo, isDark, initial }) {
       {orgInfo?.logo ? (
         <img src={orgInfo.logo} alt="Logo" className="w-8 h-8 rounded-xl object-contain bg-white p-0.5 ring-1 ring-black/10" />
       ) : (
-        <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-indigo-500/30">
-          {initial}
-        </div>
+        <img src="/bm.png" alt="Bilz Manager" className="w-8 h-8 rounded-xl object-contain shrink-0" />
       )}
       <span className={`font-bold text-base tracking-tight truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>
-        {orgInfo?.name || 'BizManager'}
+        {orgInfo?.name || 'Bilz Manager'}
       </span>
     </div>
   )

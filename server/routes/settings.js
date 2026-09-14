@@ -2,16 +2,24 @@ const express = require('express')
 const router = express.Router()
 const Settings = require('../models/Settings')
 const auth = require('../middleware/auth')
+const { getCache, setCache, delCache, TTL } = require('../utils/cache')
 
 router.use(auth)
+
+const cacheKey = (orgId) => `settings:${orgId}`
 
 // Get org settings (shared across all org members)
 router.get('/', async (req, res) => {
   try {
+    const key = cacheKey(req.user.orgId)
+    const cached = await getCache(key)
+    if (cached) return res.json(cached)
+
     let settings = await Settings.findOne({ user: req.user.orgId })
     if (!settings) {
       settings = await Settings.create({ user: req.user.orgId })
     }
+    await setCache(key, settings, TTL.LONG)
     res.json(settings)
   } catch (err) {
     res.status(500).json({ message: err.message })
@@ -33,6 +41,7 @@ router.put('/', async (req, res) => {
       { new: true, upsert: true }
     )
 
+    await delCache(cacheKey(req.user.orgId))
     res.json(settings)
   } catch (err) {
     res.status(500).json({ message: err.message })

@@ -21,7 +21,7 @@ const sendInvitation = async ({ to, orgName, password }) => {
         <div style="display:inline-flex;align-items:center;justify-content:center;width:52px;height:52px;background:#4f46e5;border-radius:14px;margin-bottom:10px">
           <span style="color:#fff;font-size:20px;font-weight:800">B</span>
         </div>
-        <div style="font-size:18px;font-weight:700;color:#111">BizManager</div>
+        <div style="font-size:18px;font-weight:700;color:#111">Bilz Manager</div>
       </div>
 
       <h2 style="margin:0 0 10px;font-size:20px;color:#4f46e5">You've been added to ${orgName}</h2>
@@ -42,15 +42,15 @@ const sendInvitation = async ({ to, orgName, password }) => {
       </p>
 
       <div style="border-top:1px solid #e5e7eb;padding-top:18px;text-align:center">
-        <p style="color:#9ca3af;font-size:12px;margin:0">BizManager · Billing &amp; Inventory Management</p>
+        <p style="color:#9ca3af;font-size:12px;margin:0">Bilz Manager · Billing &amp; Inventory Management</p>
       </div>
     </div>
   `
 
   await transporter.sendMail({
-    from: `"BizManager" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
+    from: `"Bilz Manager" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
     to,
-    subject: `You've been added to ${orgName} on BizManager`,
+    subject: `You've been added to ${orgName} on Bilz Manager`,
     html,
   })
 }
