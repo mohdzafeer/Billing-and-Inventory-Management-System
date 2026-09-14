@@ -1,3 +1,5 @@
+import { useTheme } from '../context/ThemeContext'
+
 const navItems = [
   {
     key: 'dashboard',
@@ -47,79 +49,243 @@ const navItems = [
   },
 ]
 
-export default function Sidebar({ currentPage, setCurrentPage, onLogout, orgInfo, currentUser }) {
+function NavButton({ item, isActive, isDark, onClick, isAdmin }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer relative group ${
+        isActive
+          ? isDark ? 'text-white' : 'text-indigo-700'
+          : isDark ? 'text-zinc-500 hover:text-zinc-200' : 'text-gray-500 hover:text-gray-900'
+      }`}
+    >
+      {isActive && (
+        <span className={`absolute inset-0 rounded-xl ${
+          isDark
+            ? 'bg-gradient-to-r from-indigo-500/[0.18] to-violet-500/[0.08] border border-white/[0.08]'
+            : 'bg-indigo-50 border border-indigo-100'
+        }`} />
+      )}
+      {!isActive && (
+        <span className={`absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity ${
+          isDark ? 'bg-white/[0.04]' : 'bg-gray-100'
+        }`} />
+      )}
+      <span className={`relative z-10 shrink-0 ${isActive ? isDark ? 'text-indigo-400' : 'text-indigo-600' : ''}`}>
+        {item.icon}
+      </span>
+      <span className="relative z-10">{item.label}</span>
+      {item.key === 'members' && isAdmin && (
+        <span className={`relative z-10 ml-auto text-xs px-1.5 py-0.5 rounded-full ${
+          isDark ? 'bg-indigo-500/15 text-indigo-400' : 'bg-indigo-50 text-indigo-600'
+        }`}>Admin</span>
+      )}
+    </button>
+  )
+}
+
+function Brand({ orgInfo, isDark, initial }) {
+  return (
+    <div className="flex items-center gap-2.5">
+      {orgInfo?.logo ? (
+        <img src={orgInfo.logo} alt="Logo" className="w-8 h-8 rounded-xl object-contain bg-white p-0.5 ring-1 ring-black/10" />
+      ) : (
+        <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-indigo-500/30">
+          {initial}
+        </div>
+      )}
+      <span className={`font-bold text-base tracking-tight truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>
+        {orgInfo?.name || 'BizManager'}
+      </span>
+    </div>
+  )
+}
+
+export default function Sidebar({ currentPage, setCurrentPage, onLogout, orgInfo, currentUser, menuOpen, setMenuOpen }) {
+  const { isDark } = useTheme()
   const initial = orgInfo?.name ? orgInfo.name.charAt(0).toUpperCase() : 'B'
   const isAdmin = currentUser?.role === 'admin'
 
+  const navigate = (key) => {
+    setCurrentPage(key)
+    setMenuOpen(false)
+  }
+
+  const sidebarBg = isDark
+    ? 'bg-zinc-950/90 backdrop-blur-2xl border-r border-white/[0.07]'
+    : 'bg-white/80 backdrop-blur-xl border-r border-black/[0.05] shadow-[1px_0_24px_rgba(0,0,0,0.06)]'
+
+  const divider = isDark ? 'border-white/[0.05]' : 'border-black/[0.04]'
+
+  const userBadge = isDark ? 'bg-white/[0.03]' : 'bg-gray-50/80'
+
   return (
-    <aside className="w-64 bg-slate-900 flex flex-col shrink-0 print:hidden">
-      {/* Brand */}
-      <div className="h-16 flex items-center px-6 border-b border-slate-800">
-        <div className="flex items-center gap-2.5">
-          {orgInfo?.logo ? (
-            <img
-              src={orgInfo.logo}
-              alt="Logo"
-              className="w-8 h-8 rounded-lg object-contain bg-white p-0.5"
+    <>
+      {/* ── Desktop Sidebar ─────────────────────────────────── */}
+      <aside className={`hidden lg:flex flex-col w-64 shrink-0 print:hidden relative ${sidebarBg}`}>
+        {isDark && (
+          <div className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-indigo-600/[0.06] to-transparent pointer-events-none rounded-tr-xl" />
+        )}
+
+        {/* Brand */}
+        <div className={`h-16 flex items-center px-5 shrink-0 border-b ${divider}`}>
+          <Brand orgInfo={orgInfo} isDark={isDark} initial={initial} />
+        </div>
+
+        {/* Nav */}
+        <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+          {navItems.map(item => (
+            <NavButton
+              key={item.key}
+              item={item}
+              isActive={currentPage === item.key}
+              isDark={isDark}
+              isAdmin={isAdmin}
+              onClick={() => navigate(item.key)}
             />
-          ) : (
-            <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center text-white font-bold text-sm">
-              {initial}
+          ))}
+        </nav>
+
+        {/* Footer */}
+        <div className={`p-3 space-y-0.5 shrink-0 border-t ${divider}`}>
+          {currentUser && (
+            <div className={`px-3 py-2.5 mb-1 rounded-xl ${userBadge}`}>
+              <p className={`text-xs truncate font-medium ${isDark ? 'text-zinc-400' : 'text-gray-600'}`}>
+                {currentUser.email}
+              </p>
+              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full mt-1 inline-block ${
+                isAdmin
+                  ? isDark ? 'bg-indigo-500/15 text-indigo-400' : 'bg-indigo-50 text-indigo-700'
+                  : isDark ? 'bg-white/[0.06] text-zinc-400' : 'bg-gray-100 text-gray-600'
+              }`}>
+                {isAdmin ? 'Admin' : 'Member'}
+              </span>
             </div>
           )}
-          <span className="text-white font-bold text-base tracking-tight truncate">
-            {orgInfo?.name || 'BizManager'}
-          </span>
+          <button
+            onClick={onLogout}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors cursor-pointer ${
+              isDark
+                ? 'text-zinc-600 hover:bg-red-500/10 hover:text-red-400'
+                : 'text-gray-500 hover:bg-red-50 hover:text-red-600'
+            }`}
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            Logout
+          </button>
+        </div>
+      </aside>
+
+      {/* ── Mobile Drawer ─────────────────────────────────────── */}
+      <div
+        className={`lg:hidden fixed inset-0 z-50 transition-opacity duration-300 print:hidden ${menuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+      >
+        {/* Backdrop */}
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMenuOpen(false)} />
+
+        {/* Drawer panel */}
+        <div className={`absolute left-0 top-0 h-full w-72 max-w-[85vw] flex flex-col transition-transform duration-300 ${menuOpen ? 'translate-x-0' : '-translate-x-full'} ${
+          isDark
+            ? 'bg-zinc-950/95 backdrop-blur-2xl border-r border-white/[0.08]'
+            : 'bg-white/95 backdrop-blur-xl border-r border-black/[0.06] shadow-2xl'
+        }`}>
+          {isDark && (
+            <div className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-indigo-600/[0.08] to-transparent pointer-events-none" />
+          )}
+
+          <div className={`h-16 flex items-center justify-between px-5 shrink-0 border-b ${divider}`}>
+            <Brand orgInfo={orgInfo} isDark={isDark} initial={initial} />
+            <button
+              onClick={() => setMenuOpen(false)}
+              className={`p-2 rounded-xl transition-colors cursor-pointer ${
+                isDark ? 'text-zinc-500 hover:text-white hover:bg-white/[0.06]' : 'text-gray-400 hover:text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+            {navItems.map(item => (
+              <NavButton
+                key={item.key}
+                item={item}
+                isActive={currentPage === item.key}
+                isDark={isDark}
+                isAdmin={isAdmin}
+                onClick={() => navigate(item.key)}
+              />
+            ))}
+          </nav>
+
+          <div className={`p-3 space-y-0.5 shrink-0 border-t ${divider}`}>
+            {currentUser && (
+              <div className={`px-3 py-2.5 mb-2 rounded-xl ${userBadge}`}>
+                <p className={`text-xs truncate font-medium ${isDark ? 'text-zinc-400' : 'text-gray-600'}`}>{currentUser.email}</p>
+                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full mt-1 inline-block ${
+                  isAdmin
+                    ? isDark ? 'bg-indigo-500/15 text-indigo-400' : 'bg-indigo-50 text-indigo-700'
+                    : isDark ? 'bg-white/[0.06] text-zinc-400' : 'bg-gray-100 text-gray-600'
+                }`}>
+                  {isAdmin ? 'Admin' : 'Member'}
+                </span>
+              </div>
+            )}
+            <button
+              onClick={onLogout}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors cursor-pointer ${
+                isDark ? 'text-zinc-600 hover:bg-red-500/10 hover:text-red-400' : 'text-gray-500 hover:bg-red-50 hover:text-red-600'
+              }`}
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              Logout
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-3 py-5 space-y-1">
-        {navItems.map((item) => {
-          // Members page: show for admin always; show for members too (they can see team)
+      {/* ── Mobile Bottom Tab Bar — Liquid Glass Pill ──────────── */}
+      <nav className={`lg:hidden fixed bottom-5 left-1/2 -translate-x-1/2 z-40 flex items-center gap-0.5 px-2 py-2 rounded-[22px] print:hidden ${
+        isDark
+          ? 'bg-zinc-900/75 backdrop-blur-2xl border border-white/[0.13] shadow-[0_8px_48px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.06)]'
+          : 'bg-white/80 backdrop-blur-xl border border-black/[0.07] shadow-[0_8px_40px_rgba(0,0,0,0.14),inset_0_1px_0_rgba(255,255,255,0.9)]'
+      }`}>
+        {navItems.map(item => {
+          const isActive = currentPage === item.key
           return (
             <button
               key={item.key}
               onClick={() => setCurrentPage(item.key)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer
-                ${currentPage === item.key
-                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20'
-                  : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-                }`}
+              title={item.label}
+              className={`relative flex flex-col items-center justify-center w-12 h-11 rounded-[16px] transition-all duration-200 cursor-pointer ${
+                isActive
+                  ? isDark ? 'text-white' : 'text-indigo-700'
+                  : isDark ? 'text-zinc-500 active:text-zinc-300' : 'text-gray-400 active:text-gray-700'
+              }`}
             >
-              {item.icon}
-              {item.label}
-              {item.key === 'members' && isAdmin && (
-                <span className="ml-auto text-xs bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded-full">
-                  Admin
-                </span>
+              {isActive && (
+                <span className={`absolute inset-0 rounded-[16px] ${
+                  isDark
+                    ? 'bg-gradient-to-b from-indigo-500/30 to-indigo-600/20 border border-indigo-500/25 shadow-[0_0_12px_rgba(99,102,241,0.25)]'
+                    : 'bg-indigo-50 border border-indigo-200/70'
+                }`} />
+              )}
+              <span className={`relative z-10 ${isActive ? isDark ? 'text-indigo-400' : 'text-indigo-600' : ''}`}>
+                {item.icon}
+              </span>
+              {isActive && (
+                <span className={`absolute bottom-1.5 w-1 h-1 rounded-full ${isDark ? 'bg-indigo-400' : 'bg-indigo-500'}`} />
               )}
             </button>
           )
         })}
       </nav>
-
-      {/* Footer — role badge + logout */}
-      <div className="p-3 border-t border-slate-800 space-y-1">
-        {currentUser && (
-          <div className="px-3 py-2 mb-1">
-            <p className="text-xs text-slate-500 truncate">{currentUser.email}</p>
-            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full mt-1 inline-block
-              ${isAdmin ? 'bg-indigo-500/20 text-indigo-300' : 'bg-slate-700 text-slate-400'}`}>
-              {isAdmin ? 'Admin' : 'Member'}
-            </span>
-          </div>
-        )}
-        <button
-          onClick={onLogout}
-          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-500 hover:bg-red-500/10 hover:text-red-400 transition-colors cursor-pointer"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-          </svg>
-          Logout
-        </button>
-      </div>
-    </aside>
+    </>
   )
 }

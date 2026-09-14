@@ -8,8 +8,10 @@ import Settings from './pages/Settings'
 import Members from './pages/Members'
 import Home from './pages/Home'
 import { productsApi, billsApi, settingsApi, authApi } from './api/index'
+import { ThemeProvider, useTheme } from './context/ThemeContext'
 
-function App() {
+function AppContent() {
+  const { isDark } = useTheme()
   const [token, setToken] = useState(() => localStorage.getItem('biz_token'))
   const [currentUser, setCurrentUser] = useState(null)
   const [currentPage, setCurrentPage] = useState('dashboard')
@@ -19,6 +21,7 @@ function App() {
     name: '', tagline: '', address: '', phone: '', email: '', ownerName: '', logo: null,
   })
   const [loading, setLoading] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
 
   const handleLogout = useCallback(() => {
     localStorage.removeItem('biz_token')
@@ -66,6 +69,13 @@ function App() {
     }
   }, [token, loadAllData])
 
+  // Close drawer when resizing to desktop
+  useEffect(() => {
+    const onResize = () => { if (window.innerWidth >= 1024) setMenuOpen(false) }
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+
   const handleLogin = (newToken, user) => {
     setToken(newToken)
     setCurrentUser(user)
@@ -77,9 +87,9 @@ function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-zinc-950' : 'bg-gray-50'}`}>
         <div className="text-center">
-          <svg className="w-10 h-10 animate-spin text-indigo-600 mx-auto mb-3" fill="none" viewBox="0 0 24 24">
+          <svg className="w-10 h-10 animate-spin text-indigo-400 mx-auto mb-3" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
           </svg>
@@ -115,17 +125,24 @@ function App() {
   }
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden">
+    <div className={`flex h-screen overflow-hidden ${isDark ? 'bg-zinc-950' : 'bg-gray-100'}`}>
       <Sidebar
         currentPage={currentPage}
         setCurrentPage={setCurrentPage}
         onLogout={handleLogout}
         orgInfo={orgInfo}
         currentUser={currentUser}
+        menuOpen={menuOpen}
+        setMenuOpen={setMenuOpen}
       />
-      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-        <Navbar currentPage={currentPage} orgInfo={orgInfo} currentUser={currentUser} />
-        <main className="flex-1 overflow-y-auto">
+      <div className={`flex-1 flex flex-col overflow-hidden min-w-0 ${isDark ? 'bg-zinc-900' : 'bg-gray-50'}`}>
+        <Navbar
+          currentPage={currentPage}
+          orgInfo={orgInfo}
+          currentUser={currentUser}
+          onMenuOpen={() => setMenuOpen(true)}
+        />
+        <main className="flex-1 overflow-y-auto pb-24 lg:pb-0">
           {renderPage()}
         </main>
       </div>
@@ -133,4 +150,10 @@ function App() {
   )
 }
 
-export default App
+export default function App() {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
+  )
+}

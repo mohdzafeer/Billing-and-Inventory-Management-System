@@ -1,9 +1,11 @@
 import { useState, useRef } from 'react'
 import { billsApi } from '../api/index'
+import { useTheme } from '../context/ThemeContext'
 
 const generateInvoiceNo = () => `INV-${Date.now().toString().slice(-7)}`
 
 export default function Billing({ products, setProducts, bills, setBills, orgInfo }) {
+  const { isDark } = useTheme()
   const [customer, setCustomer] = useState({ name: '', phone: '', address: '' })
   const [items, setItems] = useState([])
   const [selectedProductId, setSelectedProductId] = useState('')
@@ -75,7 +77,6 @@ export default function Billing({ products, setProducts, bills, setBills, orgInf
       })
       setBills(prev => [bill, ...prev])
       setSavedBill(bill)
-      // Deduct sold quantities from local products state
       setProducts(prev => prev.map(p => {
         const sold = items.find(i => i.productId === p._id)
         return sold ? { ...p, quantity: Math.max(0, p.quantity - sold.qty) } : p
@@ -133,42 +134,49 @@ export default function Billing({ products, setProducts, bills, setBills, orgInf
     setSavedBill(null)
   }
 
+  const card = isDark ? 'bg-zinc-900 border-white/[0.06]' : 'bg-white border-gray-200'
+  const inputCl = isDark
+    ? 'bg-zinc-800 border-white/[0.08] text-white placeholder-zinc-600 focus:ring-indigo-500 focus:border-transparent'
+    : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400 focus:ring-indigo-500 focus:border-transparent'
+  const labelCl = isDark ? 'text-zinc-400' : 'text-gray-500'
+  const titleCl = isDark ? 'text-white' : 'text-gray-900'
+
   return (
     <div className="p-6 flex gap-5 h-full min-h-0">
       {/* Left Panel */}
       <div className="flex-1 space-y-4 overflow-y-auto min-w-0">
         {/* Customer Info */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <h2 className="font-semibold text-gray-900 mb-4">Customer Information</h2>
+        <div className={`rounded-xl border p-5 ${card}`}>
+          <h2 className={`font-semibold mb-4 ${titleCl}`}>Customer Information</h2>
           <div className="space-y-3">
             <div>
-              <label className="text-xs font-medium text-gray-500 block mb-1">Customer Name</label>
+              <label className={`text-xs font-medium block mb-1 ${labelCl}`}>Customer Name</label>
               <input
                 type="text"
                 value={customer.name}
                 onChange={e => setCustomer({ ...customer, name: e.target.value })}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ${inputCl}`}
                 placeholder="Walk-in Customer"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-medium text-gray-500 block mb-1">Phone</label>
+                <label className={`text-xs font-medium block mb-1 ${labelCl}`}>Phone</label>
                 <input
                   type="tel"
                   value={customer.phone}
                   onChange={e => setCustomer({ ...customer, phone: e.target.value })}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ${inputCl}`}
                   placeholder="+92 xxx xxxxxxx"
                 />
               </div>
               <div>
-                <label className="text-xs font-medium text-gray-500 block mb-1">Address</label>
+                <label className={`text-xs font-medium block mb-1 ${labelCl}`}>Address</label>
                 <input
                   type="text"
                   value={customer.address}
                   onChange={e => setCustomer({ ...customer, address: e.target.value })}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ${inputCl}`}
                   placeholder="City, Area"
                 />
               </div>
@@ -177,15 +185,18 @@ export default function Billing({ products, setProducts, bills, setBills, orgInf
         </div>
 
         {/* Add Items */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <h2 className="font-semibold text-gray-900 mb-4">Add Items</h2>
-          <div className="flex bg-gray-100 rounded-lg p-1 mb-4 w-fit">
+        <div className={`rounded-xl border p-5 ${card}`}>
+          <h2 className={`font-semibold mb-4 ${titleCl}`}>Add Items</h2>
+          <div className={`flex p-1 rounded-lg mb-4 w-fit ${isDark ? 'bg-white/[0.05]' : 'bg-gray-100'}`}>
             {['inventory', 'custom'].map(m => (
               <button
                 key={m}
                 onClick={() => setAddMode(m)}
-                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer
-                  ${addMode === m ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer ${
+                  addMode === m
+                    ? isDark ? 'bg-white/[0.12] text-white' : 'bg-white text-gray-900 shadow-sm'
+                    : isDark ? 'text-zinc-500 hover:text-zinc-300' : 'text-gray-500 hover:text-gray-700'
+                }`}
               >
                 {m === 'inventory' ? 'From Inventory' : 'Custom Item'}
               </button>
@@ -197,7 +208,7 @@ export default function Billing({ products, setProducts, bills, setBills, orgInf
               <select
                 value={selectedProductId}
                 onChange={e => setSelectedProductId(e.target.value)}
-                className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                className={`flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ${inputCl}`}
               >
                 <option value="">Select a product...</option>
                 {products.map(p => (
@@ -209,7 +220,7 @@ export default function Billing({ products, setProducts, bills, setBills, orgInf
               <button
                 onClick={addFromInventory}
                 disabled={!selectedProductId}
-                className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-200 disabled:text-gray-400 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer disabled:cursor-not-allowed"
+                className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer"
               >
                 Add
               </button>
@@ -217,42 +228,42 @@ export default function Billing({ products, setProducts, bills, setBills, orgInf
           ) : (
             <div className="space-y-3">
               <div>
-                <label className="text-xs font-medium text-gray-500 block mb-1">Item Name</label>
+                <label className={`text-xs font-medium block mb-1 ${labelCl}`}>Item Name</label>
                 <input
                   type="text"
                   value={customItem.name}
                   onChange={e => setCustomItem({ ...customItem, name: e.target.value })}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ${inputCl}`}
                   placeholder="Enter item name"
                 />
               </div>
               <div className="flex gap-3">
                 <div className="flex-1">
-                  <label className="text-xs font-medium text-gray-500 block mb-1">Price (Rs.)</label>
+                  <label className={`text-xs font-medium block mb-1 ${labelCl}`}>Price (Rs.)</label>
                   <input
                     type="number"
                     min="0"
                     value={customItem.price}
                     onChange={e => setCustomItem({ ...customItem, price: e.target.value })}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ${inputCl}`}
                     placeholder="0.00"
                   />
                 </div>
                 <div className="w-24">
-                  <label className="text-xs font-medium text-gray-500 block mb-1">Qty</label>
+                  <label className={`text-xs font-medium block mb-1 ${labelCl}`}>Qty</label>
                   <input
                     type="number"
                     min="1"
                     value={customItem.qty}
                     onChange={e => setCustomItem({ ...customItem, qty: e.target.value })}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ${inputCl}`}
                   />
                 </div>
                 <div className="flex items-end">
                   <button
                     onClick={addCustom}
                     disabled={!customItem.name || !customItem.price}
-                    className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-200 disabled:text-gray-400 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer disabled:cursor-not-allowed"
+                    className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer"
                   >
                     Add
                   </button>
@@ -264,36 +275,40 @@ export default function Billing({ products, setProducts, bills, setBills, orgInf
 
         {/* Line Items */}
         {items.length > 0 ? (
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <div className="px-5 py-3 border-b border-gray-100">
-              <h2 className="font-semibold text-gray-900">Bill Items ({items.length})</h2>
+          <div className={`rounded-xl border overflow-hidden ${card}`}>
+            <div className={`px-5 py-3 border-b ${isDark ? 'border-white/[0.06]' : 'border-gray-100'}`}>
+              <h2 className={`font-semibold ${titleCl}`}>Bill Items ({items.length})</h2>
             </div>
-            <div className="divide-y divide-gray-50">
+            <div className={`divide-y ${isDark ? 'divide-white/[0.04]' : 'divide-gray-50'}`}>
               {items.map((item, i) => (
                 <div key={i} className="flex items-center gap-3 px-5 py-3">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">{item.name}</p>
-                    <p className="text-xs text-gray-400">Rs. {item.price.toLocaleString()} each</p>
+                    <p className={`text-sm font-medium truncate ${titleCl}`}>{item.name}</p>
+                    <p className={`text-xs ${isDark ? 'text-zinc-500' : 'text-gray-400'}`}>Rs. {item.price.toLocaleString()} each</p>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
                     <button
                       onClick={() => updateQty(i, item.qty - 1)}
-                      className="w-7 h-7 rounded-md border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-100 cursor-pointer"
+                      className={`w-7 h-7 rounded-md border flex items-center justify-center cursor-pointer transition-colors ${
+                        isDark ? 'border-white/[0.08] text-zinc-400 hover:bg-white/[0.06]' : 'border-gray-200 text-gray-600 hover:bg-gray-100'
+                      }`}
                     >−</button>
-                    <span className="w-8 text-center text-sm font-medium">{item.qty}</span>
+                    <span className={`w-8 text-center text-sm font-medium ${titleCl}`}>{item.qty}</span>
                     <button
                       onClick={() => updateQty(i, item.qty + 1)}
-                      className="w-7 h-7 rounded-md border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-100 cursor-pointer"
+                      className={`w-7 h-7 rounded-md border flex items-center justify-center cursor-pointer transition-colors ${
+                        isDark ? 'border-white/[0.08] text-zinc-400 hover:bg-white/[0.06]' : 'border-gray-200 text-gray-600 hover:bg-gray-100'
+                      }`}
                     >+</button>
                   </div>
                   <div className="text-right shrink-0 w-24">
-                    <p className="text-sm font-semibold text-gray-900">
+                    <p className={`text-sm font-semibold ${titleCl}`}>
                       Rs. {(item.price * item.qty).toLocaleString()}
                     </p>
                   </div>
                   <button
                     onClick={() => removeItem(i)}
-                    className="p-1 text-gray-300 hover:text-red-400 transition-colors cursor-pointer"
+                    className={`p-1 transition-colors cursor-pointer ${isDark ? 'text-zinc-700 hover:text-red-400' : 'text-gray-300 hover:text-red-400'}`}
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -304,8 +319,10 @@ export default function Billing({ products, setProducts, bills, setBills, orgInf
             </div>
           </div>
         ) : (
-          <div className="bg-white rounded-xl border border-dashed border-gray-300 py-12 text-center text-gray-400">
-            <svg className="w-10 h-10 mx-auto mb-2 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className={`rounded-xl border border-dashed py-12 text-center ${
+            isDark ? 'border-white/[0.08] text-zinc-600' : 'border-gray-300 text-gray-400'
+          }`}>
+            <svg className={`w-10 h-10 mx-auto mb-2 ${isDark ? 'text-zinc-700' : 'text-gray-300'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
             <p className="text-sm">Add items to the bill above</p>
@@ -313,7 +330,7 @@ export default function Billing({ products, setProducts, bills, setBills, orgInf
         )}
       </div>
 
-      {/* Right Panel — Bill Preview */}
+      {/* Right Panel — Bill Preview (always white, it's a print document) */}
       <div className="w-96 shrink-0 flex flex-col gap-4">
         <div className="bg-white rounded-xl border border-gray-200 flex-1 overflow-hidden flex flex-col">
           <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
@@ -412,7 +429,7 @@ export default function Billing({ products, setProducts, bills, setBills, orgInf
           <button
             onClick={handlePrint}
             disabled={items.length === 0 || saving}
-            className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-200 disabled:text-gray-400 text-white py-2.5 rounded-xl text-sm font-semibold transition-colors cursor-pointer disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white py-2.5 rounded-xl text-sm font-semibold transition-colors cursor-pointer"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
@@ -422,7 +439,7 @@ export default function Billing({ products, setProducts, bills, setBills, orgInf
           <button
             onClick={handleSave}
             disabled={items.length === 0 || saving || !!savedBill}
-            className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-200 disabled:text-gray-400 text-white py-2.5 rounded-xl text-sm font-semibold transition-colors cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed text-white py-2.5 rounded-xl text-sm font-semibold transition-colors cursor-pointer flex items-center justify-center gap-2"
           >
             {saving && (
               <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -434,7 +451,11 @@ export default function Billing({ products, setProducts, bills, setBills, orgInf
           </button>
           <button
             onClick={handleClear}
-            className="w-full border border-gray-200 text-gray-600 hover:bg-gray-50 py-2.5 rounded-xl text-sm font-medium transition-colors cursor-pointer"
+            className={`w-full border py-2.5 rounded-xl text-sm font-medium transition-colors cursor-pointer ${
+              isDark
+                ? 'border-white/[0.08] text-zinc-400 hover:bg-white/[0.04]'
+                : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+            }`}
           >
             Clear & New Bill
           </button>

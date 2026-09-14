@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import { membersApi } from '../api/index'
+import { useTheme } from '../context/ThemeContext'
 
 export default function Members({ currentUser }) {
+  const { isDark } = useTheme()
   const [members, setMembers] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
@@ -9,7 +11,7 @@ export default function Members({ currentUser }) {
   const [showPassword, setShowPassword] = useState(false)
   const [adding, setAdding] = useState(false)
   const [formError, setFormError] = useState('')
-  const [toast, setToast] = useState(null) // { type: 'success'|'warn', msg, credentials? }
+  const [toast, setToast] = useState(null)
   const [removing, setRemoving] = useState(null)
 
   const isAdmin = currentUser?.role === 'admin'
@@ -78,13 +80,21 @@ export default function Members({ currentUser }) {
     setShowPassword(false)
   }
 
+  const card = isDark ? 'bg-zinc-900 border-white/[0.06]' : 'bg-white border-gray-200'
+  const sectionHead = isDark ? 'bg-zinc-800/50 border-white/[0.06] text-zinc-500' : 'bg-gray-50 border-gray-100 text-gray-500'
+  const titleCl = isDark ? 'text-white' : 'text-gray-900'
+  const subCl = isDark ? 'text-zinc-500' : 'text-gray-500'
+  const inputCl = isDark
+    ? 'bg-zinc-800 border-white/[0.08] text-white placeholder-zinc-600 focus:ring-indigo-500 focus:border-transparent'
+    : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400 focus:ring-indigo-500 focus:border-transparent'
+
   return (
     <div className="p-6 space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Team Members</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <h1 className={`text-xl font-bold ${titleCl}`}>Team Members</h1>
+          <p className={`text-sm mt-0.5 ${subCl}`}>
             {isAdmin ? 'Manage who has access to your organization.' : 'People in your organization.'}
           </p>
         </div>
@@ -104,8 +114,9 @@ export default function Members({ currentUser }) {
       {/* Toast */}
       {toast && (
         <div className={`rounded-xl px-5 py-4 flex gap-3 ${toast.type === 'success'
-          ? 'bg-emerald-50 border border-emerald-200'
-          : 'bg-amber-50 border border-amber-200'}`}>
+          ? isDark ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-emerald-50 border border-emerald-200'
+          : isDark ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-amber-50 border border-amber-200'
+        }`}>
           <div className={`mt-0.5 shrink-0 ${toast.type === 'success' ? 'text-emerald-500' : 'text-amber-500'}`}>
             {toast.type === 'success' ? (
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -118,23 +129,28 @@ export default function Members({ currentUser }) {
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <p className={`text-sm font-medium ${toast.type === 'success' ? 'text-emerald-800' : 'text-amber-800'}`}>
+            <p className={`text-sm font-medium ${toast.type === 'success'
+              ? isDark ? 'text-emerald-400' : 'text-emerald-800'
+              : isDark ? 'text-amber-400' : 'text-amber-800'
+            }`}>
               {toast.msg}
             </p>
             {toast.credentials && (
-              <div className="mt-2 text-xs text-amber-700 space-y-1">
+              <div className={`mt-2 text-xs space-y-1 ${isDark ? 'text-amber-500' : 'text-amber-700'}`}>
                 <p>Share these credentials manually with the new member:</p>
-                <div className="bg-white border border-amber-200 rounded-lg px-3 py-2 font-mono space-y-1 mt-1">
+                <div className={`rounded-lg px-3 py-2 font-mono space-y-1 mt-1 ${
+                  isDark ? 'bg-zinc-800 border border-white/[0.06]' : 'bg-white border border-amber-200'
+                }`}>
                   <p><span className="font-semibold">Email:</span> {toast.credentials.email}</p>
                   <p><span className="font-semibold">Password:</span> {toast.credentials.password}</p>
                 </div>
                 {toast.emailError && (
-                  <p className="text-amber-600 mt-1">Reason: {toast.emailError}</p>
+                  <p className={`mt-1 ${isDark ? 'text-amber-600' : 'text-amber-600'}`}>Reason: {toast.emailError}</p>
                 )}
               </div>
             )}
           </div>
-          <button onClick={() => setToast(null)} className="text-gray-400 hover:text-gray-600 shrink-0 cursor-pointer">
+          <button onClick={() => setToast(null)} className={`shrink-0 cursor-pointer ${isDark ? 'text-zinc-600 hover:text-zinc-400' : 'text-gray-400 hover:text-gray-600'}`}>
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -143,29 +159,31 @@ export default function Members({ currentUser }) {
       )}
 
       {/* Admin card */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <div className="px-5 py-3 border-b border-gray-100 bg-gray-50">
-          <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Organization Admin</h2>
+      <div className={`rounded-xl border overflow-hidden ${card}`}>
+        <div className={`px-5 py-3 border-b ${sectionHead}`}>
+          <h2 className="text-xs font-semibold uppercase tracking-wide">Organization Admin</h2>
         </div>
         <div className="px-5 py-4 flex items-center gap-4">
           <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
             {currentUser?.email?.charAt(0).toUpperCase() || 'A'}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-gray-900 truncate">{currentUser?.email || '—'}</p>
-            <p className="text-xs text-gray-400 mt-0.5">{currentUser?.organizationName || 'Organization'}</p>
+            <p className={`text-sm font-semibold truncate ${titleCl}`}>{currentUser?.email || '—'}</p>
+            <p className={`text-xs mt-0.5 ${subCl}`}>{currentUser?.organizationName || 'Organization'}</p>
           </div>
-          <span className="text-xs font-semibold bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-full shrink-0">
+          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full shrink-0 ${
+            isDark ? 'bg-indigo-500/10 text-indigo-400' : 'bg-indigo-50 text-indigo-700'
+          }`}>
             Admin
           </span>
         </div>
       </div>
 
       {/* Members list */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <div className="px-5 py-3 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
-          <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Members</h2>
-          <span className="text-xs text-gray-400">{members.length} member{members.length !== 1 ? 's' : ''}</span>
+      <div className={`rounded-xl border overflow-hidden ${card}`}>
+        <div className={`px-5 py-3 border-b flex items-center justify-between ${sectionHead}`}>
+          <h2 className="text-xs font-semibold uppercase tracking-wide">Members</h2>
+          <span className={`text-xs ${isDark ? 'text-zinc-600' : 'text-gray-400'}`}>{members.length} member{members.length !== 1 ? 's' : ''}</span>
         </div>
 
         {loading ? (
@@ -177,41 +195,47 @@ export default function Members({ currentUser }) {
           </div>
         ) : members.length === 0 ? (
           <div className="py-16 text-center">
-            <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <svg className="w-7 h-7 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <div className={`w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3 ${isDark ? 'bg-zinc-800' : 'bg-gray-100'}`}>
+              <svg className={`w-7 h-7 ${isDark ? 'text-zinc-600' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
             </div>
-            <p className="text-sm font-medium text-gray-500">No members yet</p>
+            <p className={`text-sm font-medium ${subCl}`}>No members yet</p>
             {isAdmin && (
-              <p className="text-xs text-gray-400 mt-0.5">
+              <p className={`text-xs mt-0.5 ${isDark ? 'text-zinc-600' : 'text-gray-400'}`}>
                 Click "Add Member" to invite someone to your organization.
               </p>
             )}
           </div>
         ) : (
-          <div className="divide-y divide-gray-50">
+          <div className={`divide-y ${isDark ? 'divide-white/[0.04]' : 'divide-gray-50'}`}>
             {members.map((member) => (
-              <div key={member._id} className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition-colors">
-                <div className="w-10 h-10 rounded-full bg-violet-100 flex items-center justify-center text-violet-700 font-bold text-sm shrink-0">
+              <div key={member._id} className={`flex items-center gap-4 px-5 py-4 transition-colors ${isDark ? 'hover:bg-white/[0.02]' : 'hover:bg-gray-50'}`}>
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${
+                  isDark ? 'bg-violet-500/10 text-violet-400' : 'bg-violet-100 text-violet-700'
+                }`}>
                   {member.email.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">{member.email}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">
+                  <p className={`text-sm font-medium truncate ${titleCl}`}>{member.email}</p>
+                  <p className={`text-xs mt-0.5 ${subCl}`}>
                     Added {new Date(member.createdAt).toLocaleDateString('en-PK', {
                       year: 'numeric', month: 'short', day: 'numeric',
                     })}
                   </p>
                 </div>
-                <span className="text-xs font-medium bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full shrink-0">
+                <span className={`text-xs font-medium px-2.5 py-1 rounded-full shrink-0 ${
+                  isDark ? 'bg-white/[0.05] text-zinc-400' : 'bg-gray-100 text-gray-600'
+                }`}>
                   Member
                 </span>
                 {isAdmin && (
                   <button
                     onClick={() => handleRemove(member._id, member.email)}
                     disabled={removing === member._id}
-                    className="p-1.5 text-gray-300 hover:text-red-400 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed shrink-0"
+                    className={`p-1.5 rounded-lg transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed shrink-0 ${
+                      isDark ? 'text-zinc-700 hover:text-red-400 hover:bg-red-500/10' : 'text-gray-300 hover:text-red-400 hover:bg-red-50'
+                    }`}
                     title="Remove member"
                   >
                     {removing === member._id ? (
@@ -234,11 +258,14 @@ export default function Members({ currentUser }) {
 
       {/* Add Member Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-            <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
-              <h2 className="font-semibold text-gray-900 text-lg">Add New Member</h2>
-              <button onClick={closeModal} className="text-gray-400 hover:text-gray-600 cursor-pointer">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={closeModal}>
+          <div
+            className={`rounded-2xl shadow-2xl w-full max-w-md ${isDark ? 'bg-zinc-900 border border-white/[0.08]' : 'bg-white'}`}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className={`px-6 py-5 border-b flex items-center justify-between ${isDark ? 'border-white/[0.06]' : 'border-gray-100'}`}>
+              <h2 className={`font-semibold text-lg ${titleCl}`}>Add New Member</h2>
+              <button onClick={closeModal} className={`cursor-pointer ${isDark ? 'text-zinc-600 hover:text-zinc-400' : 'text-gray-400 hover:text-gray-600'}`}>
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -247,21 +274,21 @@ export default function Members({ currentUser }) {
 
             <form onSubmit={handleAdd} className="p-6 space-y-4">
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1.5">
+                <label className={`text-sm font-medium block mb-1.5 ${isDark ? 'text-zinc-300' : 'text-gray-700'}`}>
                   Member's Email Address
                 </label>
                 <input
                   type="email"
                   value={form.email}
                   onChange={e => { setForm(f => ({ ...f, email: e.target.value })); setFormError('') }}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className={`w-full border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ${inputCl}`}
                   placeholder="member@example.com"
                   autoFocus
                 />
               </div>
 
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1.5">
+                <label className={`text-sm font-medium block mb-1.5 ${isDark ? 'text-zinc-300' : 'text-gray-700'}`}>
                   Set Password for Member
                 </label>
                 <div className="relative">
@@ -269,13 +296,13 @@ export default function Members({ currentUser }) {
                     type={showPassword ? 'text' : 'password'}
                     value={form.password}
                     onChange={e => { setForm(f => ({ ...f, password: e.target.value })); setFormError('') }}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent pr-10"
+                    className={`w-full border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 pr-10 ${inputCl}`}
                     placeholder="Min. 6 characters"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(v => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                    className={`absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer ${isDark ? 'text-zinc-600 hover:text-zinc-400' : 'text-gray-400 hover:text-gray-600'}`}
                   >
                     {showPassword ? (
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -289,13 +316,15 @@ export default function Members({ currentUser }) {
                     )}
                   </button>
                 </div>
-                <p className="text-xs text-gray-400 mt-1.5">
+                <p className={`text-xs mt-1.5 ${isDark ? 'text-zinc-600' : 'text-gray-400'}`}>
                   An invitation email with these credentials will be sent to the member.
                 </p>
               </div>
 
               {formError && (
-                <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-2.5 rounded-xl">
+                <div className={`text-sm px-4 py-2.5 rounded-xl ${
+                  isDark ? 'bg-red-500/10 border border-red-500/20 text-red-400' : 'bg-red-50 border border-red-200 text-red-700'
+                }`}>
                   {formError}
                 </div>
               )}
@@ -304,7 +333,9 @@ export default function Members({ currentUser }) {
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="flex-1 border border-gray-200 text-gray-600 hover:bg-gray-50 py-2.5 rounded-xl text-sm font-medium transition-colors cursor-pointer"
+                  className={`flex-1 border py-2.5 rounded-xl text-sm font-medium transition-colors cursor-pointer ${
+                    isDark ? 'border-white/[0.08] text-zinc-400 hover:bg-white/[0.04]' : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                  }`}
                 >
                   Cancel
                 </button>
